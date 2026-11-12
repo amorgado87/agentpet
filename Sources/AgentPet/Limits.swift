@@ -17,7 +17,9 @@ final class LimitsStore {
     private var mtime: Date?
     private var lastCheck = 0.0
 
-    var available: Bool { five != nil || seven != nil }
+    struct Row { var name: String; var value: Double; var percent: Bool }
+
+    var available: Bool { !rows.isEmpty }
 
     /// Cheap: looks at the file's modification date at most every 2 s. Returns true if the values changed.
     @discardableResult
@@ -47,10 +49,15 @@ final class LimitsStore {
         return max(0, min(100, w.pct))
     }
 
-    var rows: [(String, Double)] {
-        var out: [(String, Double)] = []
-        if let v = Self.value(five) { out.append(("5h", v)) }
-        if let v = Self.value(seven) { out.append(("7d", v)) }
+    /// Real plan percentages when Claude Code has handed them over; otherwise the tokens used in the last 5 h / 7 days,
+    /// counted from the local transcripts (works for the desktop app too).
+    var rows: [Row] {
+        var out: [Row] = []
+        if let v = Self.value(five) { out.append(Row(name: "5h", value: v, percent: true)) }
+        if let v = Self.value(seven) { out.append(Row(name: "7d", value: v, percent: true)) }
+        if !out.isEmpty { return out }
+        let t = UsageMonitor.shared.totals
+        if t.week > 0 { out = [Row(name: "5h", value: Double(t.five), percent: false), Row(name: "7d", value: Double(t.week), percent: false)] }
         return out
     }
 
@@ -59,8 +66,14 @@ final class LimitsStore {
     /// `claude` runs this with a JSON document on stdin; we print a tiny status line and keep the limits.
     static func runStatusLine() {
         let input = FileHandle.standardInput.readDataToEndOfFile()
-        guard let o = (try? JSONSerialization.jsonObject(with: input)) as? [String: Any],
-              let rl = o["rate_limits"] as? [String: Any] else { return }
+        let dir = fileURL.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let obj = (try? JSONSerialization.jsonObject(with: input)) as? [String: Any]
+        // diagnostics: when did Claude Code last call us and did it include rate_limits? (no conversation data is stored)
+        let diag: [String: Any] = ["at": Date().timeIntervalSince1970, "keys": (obj?.keys.sorted() ?? []),
+                                   "rate_limits": obj?["rate_limits"] ?? NSNull()]
+        if let d = try? JSONSerialization.data(withJSONObject: diag) { try? d.write(to: dir.appendingPathComponent("statusline-last.json"), options: .atomic) }
+        guard let o = obj, let rl = o["rate_limits"] as? [String: Any] else { return }
         func norm(_ k: String) -> [String: Any]? {
             guard let d = rl[k] as? [String: Any], let p = (d["used_percentage"] as? NSNumber)?.doubleValue else { return nil }
             var out: [String: Any] = ["pct": p]

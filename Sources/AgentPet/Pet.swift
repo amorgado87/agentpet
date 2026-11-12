@@ -122,7 +122,7 @@ final class Pet {
         let old = agentState
         agent = snap
         agentState = snap?.state ?? .idle
-        if (agentState == .idle && old != .idle) || (agentState == .done && old != .done) { showUsage(now: now) }
+        if (agentState == .idle && old != .idle && old != .done) || (agentState == .done && old != .done) { showUsage(now: now) }
 
         if let s = snap, agentState != .idle {
             let header = Prefs.bubbleProject ? s.label : nil
@@ -505,9 +505,8 @@ final class Pet {
             // it was a click
             heart = 1
             samples = []
-            vy = 0
+            vy = sqrt(2 * gravityPx * spriteH * 0.5)   // a little hop (hop() itself needs the pet to be grounded)
             grounded = false
-            hop(0.7)
             if bubble == nil { say(["¡Hola!", "¿Qué tal?", "¡Cosquillas!", "Estoy aquí 👋"].randomElement()!, seconds: 2, now: now) }
             return
         }

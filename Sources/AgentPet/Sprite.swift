@@ -19,7 +19,7 @@ enum Skin: String, CaseIterable {
 
     var name: String {
         switch self {
-        case .claude: return "Claude pixelado"
+        case .claude: return "Bicho naranja"
         case .cat: return "Gato"
         case .robot: return "Robot"
         case .ghost: return "Fantasma"
@@ -42,7 +42,7 @@ enum Skin: String, CaseIterable {
         case .duck: return (0xF3C93A, 0xD1A41C)
         }
     }
-    static var current: Skin { Skin(rawValue: Prefs.skin) ?? .claude }
+    static var current: Skin { Skin(rawValue: Prefs.skin) ?? .robot }
 }
 
 struct Palette {
@@ -55,7 +55,7 @@ struct Palette {
 
     /// id "auto" = the skin's natural colours
     static let tints: [(id: String, name: String, body: UInt32, shade: UInt32)] = [
-        ("claude", "Naranja Claude", 0xD97757, 0xB05A3C),
+        ("claude", "Naranja", 0xD97757, 0xB05A3C),
         ("blue", "Azul", 0x5B8DEF, 0x3E67B8),
         ("green", "Verde", 0x5FB57A, 0x3F8A58),
         ("purple", "Violeta", 0x9B7BE0, 0x7456B8),
@@ -163,7 +163,7 @@ struct SpriteFX {
 
 // MARK: - Renderer
 
-/// Draws the pixel Claude mascot. `origin` is the bottom-left of the canvas in ctx coordinates.
+/// Draws the pixel mascot. `origin` is the bottom-left of the canvas in ctx coordinates.
 func drawSprite(ctx: CGContext, scale s: CGFloat, origin: CGPoint,
                 visual: Visual, t: Double, dir: Int, vy: CGFloat,
                 palette pal: Palette, fx: SpriteFX = SpriteFX()) {
@@ -639,7 +639,7 @@ enum SpriteExport {
             let ox = (S - scale * CGFloat(canvasW)) / 2
             let oy = S * 0.2 - scale * 2
             drawSprite(ctx: ctx, scale: scale, origin: CGPoint(x: ox, y: oy), visual: .hop, t: 0.2, dir: 1, vy: 0,
-                       palette: Palette.make(tint: "claude", variant: 0))
+                       palette: Palette.make(tint: "auto", variant: 0, skin: .robot))
         }
         if let img { writePNG(img, to: path) }
     }

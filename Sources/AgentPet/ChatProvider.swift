@@ -63,7 +63,7 @@ final class ClaudeChatProvider: AgentProvider {
     private func sample() {
         guard let pid = findPID() else {
             wasActive = false; highSince = nil
-            set(nil); q.asyncAfter(deadline: .now() + 3) {}   // app closed: look again later
+            set(nil)   // app closed: look again later
             Thread.sleep(forTimeInterval: 2)
             return
         }

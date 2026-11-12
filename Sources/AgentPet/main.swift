@@ -34,6 +34,7 @@ if args.contains("--statusline") {
 if let i = args.firstIndex(of: "--bubble"), args.count > i + 1 {
     _ = NSApplication.shared
     Prefs.register()
+    if args.contains("--tokens") { UsageMonitor.shared.start(); Thread.sleep(forTimeInterval: 25) }
     let pet = Pet(key: "t", x: 100, y: 100)
     pet.age = 1; pet.grounded = true
     let now = CACurrentMediaTime()
@@ -85,6 +86,7 @@ if args.contains("--agents") {
 if args.contains("--social") {
     _ = NSApplication.shared
     Prefs.register()
+    Prefs.d.set("off", forKey: "saver")   // simulations must not nap because the laptop is on battery
     let world = World(); world.refresh(includeWindows: false)
     let a = Pet(key: "a", x: 300, y: 0), b = Pet(key: "b", x: 900, y: 0)
     a.grounded = true; b.grounded = true
@@ -103,6 +105,7 @@ if args.contains("--social") {
 if args.contains("--selftest") {
     _ = NSApplication.shared
     Prefs.register()
+    Prefs.d.set("off", forKey: "saver")   // simulations must not nap because the laptop is on battery
     let world = World()
     world.injected = [CGRect(x: 300, y: 200, width: 500, height: 300), CGRect(x: 900, y: 150, width: 400, height: 380)]
     world.refresh(includeWindows: true)

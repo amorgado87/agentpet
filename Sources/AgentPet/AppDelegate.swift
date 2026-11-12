@@ -26,7 +26,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func applyDockPolicy() {
         let want: NSApplication.ActivationPolicy = Prefs.dockIcon ? .regular : .accessory
-        if NSApp.activationPolicy() != want { NSApp.setActivationPolicy(want) }
+        guard NSApp.activationPolicy() != want else { return }
+        // Switching the policy makes macOS hide the app's windows: remember the settings window and bring it back.
+        let reopen = settingsWindow?.isVisible == true
+        NSApp.setActivationPolicy(want)
+        if reopen {
+            DispatchQueue.main.async { [weak self] in
+                NSApp.activate(ignoringOtherApps: true)
+                self?.settingsWindow?.makeKeyAndOrderFront(nil)
+            }
+        }
     }
 
     private func buildMainMenu() {
@@ -44,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     static func menuBarIcon() -> NSImage {
         let k = 2                                   // pixels per sprite pixel (retina)
         let w = canvasW * k, h = canvasH * k
-        let pal = Palette.make(tint: "claude", variant: 0, skin: .claude)
+        let pal = Palette.make(tint: "auto", variant: 0, skin: .robot)
         guard let src = SpriteExport.bitmap(width: w, height: h, draw: { ctx in
             drawSprite(ctx: ctx, scale: CGFloat(k), origin: .zero, visual: .stand, t: 0, dir: 1, vy: 0, palette: pal)
         }), let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,

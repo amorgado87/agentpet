@@ -12,7 +12,7 @@ enum Prefs {
             "bubbles": true, "bubbleProject": true, "bubbleFont": 12.0, "idleBubble": true,
             "maxPets": 6, "borders": true, "social": true, "hideIdle": 20.0, "alwaysShow": true, "claudeEnabled": true, "claudeChat": false, "saver": "auto", "usage": true, "usageDelta": 5.0,
             "demo": false, "demoCount": 3,
-            "tint": "auto", "skin": "claude", "variants": true,
+            "tint": "auto", "skin": "robot", "variants": true,
             "dockIcon": false, "paused": false, "pollSeconds": 3.0,
         ])
     }
@@ -40,7 +40,7 @@ enum Prefs {
     static var usageDelta: Double { max(1, d.double(forKey: "usageDelta")) }
     static var demo: Bool { d.bool(forKey: "demo") }
     static var demoCount: Int { max(1, d.integer(forKey: "demoCount")) }
-    static var skin: String { d.string(forKey: "skin") ?? "claude" }
+    static var skin: String { d.string(forKey: "skin") ?? "robot" }
     static var tint: String { d.string(forKey: "tint") ?? "auto" }
     static var variants: Bool { d.bool(forKey: "variants") }
     static var dockIcon: Bool { d.bool(forKey: "dockIcon") }

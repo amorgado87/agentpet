@@ -286,7 +286,7 @@ struct SettingsView: View {
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
-                SpritePreview(visual: .hop, tint: "auto", skin: .claude, scale: 1.5)
+                SpritePreview(visual: .hop, tint: "auto", skin: .robot, scale: 1.5)
                     .frame(width: 40, height: 34)
                 Text("AgentPet").font(.system(size: 15, weight: .bold, design: .rounded))
             }
@@ -329,7 +329,7 @@ struct SettingsView: View {
 
 private struct PetPage: View {
     @AppStorage("tint") private var tint = "auto"
-    @AppStorage("skin") private var skin = "claude"
+    @AppStorage("skin") private var skin = "robot"
     @AppStorage("scale") private var scale = 4.0
     @AppStorage("variants") private var variants = true
     @AppStorage("borders") private var borders = true
@@ -480,11 +480,11 @@ private struct BubblesPage: View {
 
     var body: some View {
         Card("Límites de uso") {
-            ToggleRow("Mostrar el uso del plan", subtitle: "Dos barritas dentro de la burbuja (sesión de 5 h y semana). Aparecen unos segundos cuando un agente termina o cuando el porcentaje cambia.", isOn: $usage)
+            ToggleRow("Mostrar el uso del plan", subtitle: "Dos líneas pequeñas dentro de la burbuja (últimas 5 h y 7 días). Aparecen unos segundos cuando un agente termina o cuando el consumo cambia. Sin la línea de estado de abajo muestra tokens; con ella, el % real de tu plan.", isOn: $usage)
             Divider()
             SliderRow(title: "Mostrar al cambiar", value: $usageDelta, range: 1...20, step: 1, format: { "\(Int($0)) %" }, disabled: !usage)
             Divider()
-            Row("Claude Code", subtitle: link.message ?? (link.linked ? "Conectado: Claude Code envía sus límites a AgentPet." : "Claude Code solo entrega estos datos a su línea de estado. Conéctala para que lleguen aquí (edita ~/.claude/settings.json).")) {
+            Row("Porcentaje real del plan", subtitle: link.message ?? (link.linked ? "Conectado. Solo llega cuando usas Claude Code en la terminal; con la app de escritorio se muestran tokens." : "Opcional: Claude Code entrega el % de tu plan solo a su línea de estado (edita ~/.claude/settings.json).")) {
                 Button(link.linked ? "Reconectar" : "Conectar") { link.connect() }
             }
             .opacity(usage ? 1 : 0.45).disabled(!usage)
@@ -591,7 +591,7 @@ private struct GeneralPage: View {
         }
         Card("Acerca de") {
             HStack(spacing: 16) {
-                SpritePreview(visual: .hop, tint: "auto", skin: .claude, scale: 4)
+                SpritePreview(visual: .hop, tint: "auto", skin: .robot, scale: 4)
                     .frame(width: 100, height: 92)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("AgentPet").font(.system(size: 17, weight: .bold, design: .rounded))

@@ -57,6 +57,13 @@ final class PetView: NSView {
         return CGFloat(max(0, a))
     }
 
+    static func compact(_ n: Int) -> String {
+        if n >= 1_000_000 { return String(format: "%.1fM", Double(n) / 1e6) }
+        if n >= 10_000 { return String(format: "%.0fk", Double(n) / 1e3) }
+        if n >= 1_000 { return String(format: "%.1fk", Double(n) / 1e3) }
+        return "\(n)"
+    }
+
     private func usageAlpha(_ pet: Pet, now: Double) -> CGFloat {
         guard Prefs.usage, now < pet.usageUntil, LimitsStore.shared.available else { return 0 }
         var a = min(1, (now - pet.usageStart) / 0.2)
@@ -67,10 +74,10 @@ final class PetView: NSView {
 
     private func signature(_ pet: Pet, now: Double) -> String {
         // animation frames per second: sleeping pets barely change, and saving energy halves the rest
-        let fps = pet.visual == .sleep ? 3.0 : (Power.saving ? 6.0 : 12.0)
+        let fps = pet.visual == .sleep ? 3.0 : (Power.saving ? 6.0 : 15.0)
         let frame = Int(pet.t * fps)
         let a = Int(bubbleAlpha(pet, now: now) * 8) * 100 + Int(usageAlpha(pet, now: now) * 8)
-        let lim = LimitsStore.shared.rows.map { Int($0.1) }
+        let lim = LimitsStore.shared.rows.map { Int($0.value) }
         let fxs = Int(spawnValue(pet) * 12) * 100 + Int((pet.dying ?? 0) * 20)
         return "\(pet.visual.rawValue)|\(frame)|\(pet.dir)|\(pet.vy > 0)|\(a)|\(pet.bubble?.text ?? "")|\(pet.bubble?.header ?? "")|\(Prefs.scale)|\(Prefs.bubbleFont)|\(pet.slot)|\(Prefs.tint)|\(Prefs.borders)|\(Prefs.variants)|\(fxs)|\(Int(pet.heart * 10))|\(lim)"
     }
@@ -105,7 +112,7 @@ final class PetView: NSView {
         }
     }
 
-    private func drawBubble(_ b: Bubble, alpha textAlpha: CGFloat, usage: [(String, Double)], usageAlpha: CGFloat, anchorX: CGFloat, bottom: CGFloat, ctx: CGContext) {
+    private func drawBubble(_ b: Bubble, alpha textAlpha: CGFloat, usage: [LimitsStore.Row], usageAlpha: CGFloat, anchorX: CGFloat, bottom: CGFloat, ctx: CGContext) {
         let fontSize = Prefs.bubbleFont
         let bodyFont = NSFont.monospacedSystemFont(ofSize: fontSize, weight: .semibold)
         let headFont = NSFont.monospacedSystemFont(ofSize: max(9, fontSize - 2.5), weight: .bold)
@@ -223,13 +230,15 @@ final class PetView: NSView {
             let x0 = bx + padX, x1 = bx + w - padX
             let labelW: CGFloat = 19, pctW: CGFloat = 28
             let track = CGColor(srgbRed: 0.90, green: 0.84, blue: 0.77, alpha: 1)
-            for (name, v) in usage {
+            for row in usage {
                 ty -= rowH
                 ctx.setShouldAntialias(true)
-                (name as NSString).draw(at: CGPoint(x: x0, y: ty), withAttributes: la)
-                let txt = "\(Int(v.rounded()))%"
+                (row.name as NSString).draw(at: CGPoint(x: x0, y: ty), withAttributes: la)
+                let txt = row.percent ? "\(Int(row.value.rounded()))%" : Self.compact(Int(row.value))
                 let tw = (txt as NSString).size(withAttributes: pa).width
                 (txt as NSString).draw(at: CGPoint(x: x1 - tw, y: ty), withAttributes: pa)
+                guard row.percent else { continue }       // token counts have no limit to fill a bar against
+                let v = row.value
                 ctx.setShouldAntialias(false)
                 let bx0 = x0 + labelW, bw = x1 - pctW - bx0, bh: CGFloat = 4
                 let by0 = ty + (rowH - bh) / 2 + 1

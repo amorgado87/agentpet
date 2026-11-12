@@ -78,6 +78,17 @@ final class ClaudeCodeProvider: AgentProvider {
     private var cwdCache: [Int: String] = [:]
     private let home = FileManager.default.homeDirectoryForCurrentUser.path
     private let myPID = Int(ProcessInfo.processInfo.processIdentifier)
+    /// Parsing 400 KB of JSON every poll is the expensive part; reuse it until the transcript actually changes.
+    private var tailCache: [String: (mtime: Date, size: UInt64, entries: [[String: Any]])] = [:]
+
+    private func cachedTail(path: String, mtime: Date) -> [[String: Any]]? {
+        let size = ((try? FileManager.default.attributesOfItem(atPath: path))?[.size] as? NSNumber)?.uint64Value ?? 0
+        if let c = tailCache[path], c.mtime == mtime, c.size == size { return c.entries }
+        guard let t = Self.readTail(path: path) else { return nil }
+        tailCache[path] = (mtime, size, t)
+        if tailCache.count > 24 { tailCache = tailCache.filter { $0.key == path } }
+        return t
+    }
 
     struct Proc { var pid: Int; var ppid: Int; var command: String }
 
@@ -106,7 +117,7 @@ final class ClaudeCodeProvider: AgentProvider {
             let key = "claude:\(proc.pid)"
 
             guard let file = transcript(forCwd: cwd, index: idx),
-                  let tail = Self.readTail(path: file.path) else {
+                  let tail = cachedTail(path: file.path, mtime: file.mtime) else {
                 out.append(AgentSnapshot(key: key, parentKey: nil, provider: id, label: label, state: .idle, text: "Esperando órdenes…"))
                 continue
             }

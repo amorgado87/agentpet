@@ -15,6 +15,8 @@ final class PetManager: ObservableObject {
     private var wasPaused = false
     private var nextMatch = 0.0
     private var shownLimits: (Double, Double) = (-1, -1)
+    private var shownTokens = -1
+    private var seenUsageVersion = -1
     private var lastActive: [String: Double] = [:]   // agent key -> last time it was busy
 
     /// Drops agents that have been idle for a while so the desktop doesn't fill up with sleepy pets.
@@ -39,10 +41,21 @@ final class PetManager: ObservableObject {
         }
         monitor.start()
         setRate(30)
+        // Click-through is decided by where the mouse is. Ticks can be slow (resting/saving), so also react to the mouse itself.
+        NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in self?.updateClickThrough() }
         reconcile([])
     }
 
     private var rate = 0.0
+
+    /// Pets only catch the mouse while it is over their sprite; everywhere else clicks go through to the windows below.
+    private func updateClickThrough() {
+        let mouse = NSEvent.mouseLocation
+        for p in pets {
+            let over = p.dragging || (p.dying == nil && p.hitRect.contains(mouse))
+            if p.panel.ignoresMouseEvents == over { p.panel.ignoresMouseEvents = !over }
+        }
+    }
 
     /// The simulation only needs a high rate while something actually moves; resting pets tick slowly.
     private func setRate(_ hz: Double) {
@@ -191,6 +204,18 @@ final class PetManager: ObservableObject {
         }
     }
 
+    /// Without real plan percentages: show the token counts when the 5 h total moved by `usageDelta` % (and at least 20k).
+    private func tokensChanged(now: Double) {
+        guard LimitsStore.shared.five == nil, LimitsStore.shared.seven == nil else { return }
+        let cur = UsageMonitor.shared.totals.five
+        guard shownTokens >= 0 else { shownTokens = cur; return }   // first read only sets the baseline
+        if abs(cur - shownTokens) >= max(20_000, Int(Double(shownTokens) * Prefs.usageDelta / 100)) {
+            shownTokens = cur
+            let alive = pets.filter { $0.dying == nil }
+            (alive.first { $0.agentState != .idle } ?? alive.first)?.showUsage(now: now)
+        }
+    }
+
     func showUsageNow() {
         let alive = pets.filter { $0.dying == nil }
         (alive.first { $0.agentState != .idle } ?? alive.first)?.showUsage(now: CACurrentMediaTime())
@@ -211,7 +236,7 @@ final class PetManager: ObservableObject {
         }
         let saving = Power.saving
         if paused { setRate(4); return }
-        setRate(pets.allSatisfy(isResting) ? (saving ? 4 : 12) : (saving ? 20 : 30))
+        setRate(pets.allSatisfy(isResting) ? (saving ? 4 : 12) : (saving ? 20 : 60))
 
         // "always show" turned off while idle -> let the home pet go
         if !Prefs.alwaysShow, agents.isEmpty {
@@ -225,7 +250,11 @@ final class PetManager: ObservableObject {
         let busy = pets.contains { $0.dying == nil && (!$0.grounded || $0.dragging || $0.surface != .floor) }
         if tickCount % (saving ? (busy ? 4 : 12) : (busy ? 6 : 20)) == 0 || world.union.isNull { world.refresh(includeWindows: Prefs.useWindows) }
 
-        if Prefs.usage, LimitsStore.shared.refresh(now: now) { limitsChanged(now: now) }
+        if Prefs.usage {
+            UsageMonitor.shared.start()
+            if LimitsStore.shared.refresh(now: now) { limitsChanged(now: now) }
+            if UsageMonitor.shared.version != seenUsageVersion { seenUsageVersion = UsageMonitor.shared.version; tokensChanged(now: now) }
+        }
 
         if Prefs.social && now >= nextMatch { matchmake(now: now) }
 
@@ -234,14 +263,13 @@ final class PetManager: ObservableObject {
             p.step(dt: dt, now: now, world: world)
             p.syncWindow(now: now)
 
-            // click-through except on the sprite itself
-            let over = p.dragging || (p.dying == nil && p.hitRect.contains(mouse))
-            if p.panel.ignoresMouseEvents == over { p.panel.ignoresMouseEvents = !over }
             // wake sleepers when the mouse comes close
             if p.mode == .sleep, hypot(mouse.x - p.x, mouse.y - p.y) < 90 {
                 p.mode = .idle; p.modeUntil = now + 1
             }
         }
+
+        updateClickThrough()
 
         // remove the ones whose poof finished
         for p in pets where (p.dying ?? 0) > 0.5 {

@@ -1,6 +1,8 @@
 # AgentPet 🟧
 
-Mascota de escritorio para macOS para tus agentes de código. En esta primera versión es el **Claude pixelado**: camina por el escritorio, se sube a las ventanas, salta de una a otra, baja al suelo y reacciona a lo que hace Claude Code.
+Mascota de escritorio para macOS para tus agentes de código. Hay ocho mascotas pixeladas (robot por defecto, gato, fantasma, perro, caca, ratón, pato y un bicho naranja): caminan por el escritorio, se sube a las ventanas, salta de una a otra, baja al suelo y reaccionan a lo que hacen tus agentes (hoy Claude Code).
+
+> **Aviso**: proyecto no oficial, sin afiliación ni respaldo de Anthropic. «Claude» y «Claude Code» son marcas de sus respectivos propietarios y se mencionan solo para indicar con qué es compatible. Las mascotas son dibujos originales en píxeles.
 
 ## Compilar y abrir
 
