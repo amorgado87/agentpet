@@ -480,7 +480,7 @@ private struct BubblesPage: View {
 
     var body: some View {
         Card("Límites de uso") {
-            ToggleRow("Mostrar el uso del plan", subtitle: "Dos líneas pequeñas dentro de la burbuja (últimas 5 h y 7 días). Aparecen unos segundos cuando un agente termina o cuando el consumo cambia. Sin la línea de estado de abajo muestra tokens; con ella, el % real de tu plan.", isOn: $usage)
+            ToggleRow("Mostrar el uso del plan", subtitle: "Dos líneas pequeñas dentro de la burbuja (últimas 5 h y 7 días). Aparecen unos segundos cuando un agente termina o cuando el consumo cambia. Doble clic en la mascota lo muestra al momento. Muestra los tokens gastados (contados en local). Si Claude Code envía los límites de tu plan por la línea de estado de abajo, muestra el % real con barras.", isOn: $usage)
             Divider()
             SliderRow(title: "Mostrar al cambiar", value: $usageDelta, range: 1...20, step: 1, format: { "\(Int($0)) %" }, disabled: !usage)
             Divider()

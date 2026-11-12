@@ -18,7 +18,7 @@ final class UsageMonitor {
     }()
     private let isoPlain = ISO8601DateFormatter()
 
-    /// Rolling totals: the last ~5 hours and the last 7 days.
+    /// Rolling totals: tokens in the last ~5 hours and the last 7 days.
     var totals: (five: Int, week: Int) { lock.lock(); defer { lock.unlock() }; return (five, week) }
     var hasData: Bool { let t = totals; return t.week > 0 }
 

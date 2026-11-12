@@ -150,6 +150,13 @@ final class Pet {
         usageUntil = now + 7
     }
 
+    /// Double click: show the usage bars now, or say why they can't be shown.
+    func showUsageByHand(now: Double) {
+        guard Prefs.usage else { say("Actívalo en Ajustes → Burbujas", seconds: 3, now: now); return }
+        UsageMonitor.shared.start()
+        if LimitsStore.shared.available { showUsage(now: now) } else { say("Calculando consumo…", seconds: 2.5, now: now) }
+    }
+
     func say(_ text: String, seconds: Double, now: Double) {
         bubble = Bubble(header: nil, text: text, until: now + seconds, start: now)
     }

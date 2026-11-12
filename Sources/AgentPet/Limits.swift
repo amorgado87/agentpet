@@ -17,7 +17,7 @@ final class LimitsStore {
     private var mtime: Date?
     private var lastCheck = 0.0
 
-    struct Row { var name: String; var value: Double; var percent: Bool }
+    struct Row { var name: String; var value: Double; var percent: Bool; var fraction: Double }
 
     var available: Bool { !rows.isEmpty }
 
@@ -53,11 +53,14 @@ final class LimitsStore {
     /// counted from the local transcripts (works for the desktop app too).
     var rows: [Row] {
         var out: [Row] = []
-        if let v = Self.value(five) { out.append(Row(name: "5h", value: v, percent: true)) }
-        if let v = Self.value(seven) { out.append(Row(name: "7d", value: v, percent: true)) }
+        if let v = Self.value(five) { out.append(Row(name: "5h", value: v, percent: true, fraction: v / 100)) }
+        if let v = Self.value(seven) { out.append(Row(name: "7d", value: v, percent: true, fraction: v / 100)) }
         if !out.isEmpty { return out }
         let t = UsageMonitor.shared.totals
-        if t.week > 0 { out = [Row(name: "5h", value: Double(t.five), percent: false), Row(name: "7d", value: Double(t.week), percent: false)] }
+        if t.week > 0 {
+            out = [Row(name: "5h", value: Double(t.five), percent: false, fraction: 0),
+                   Row(name: "7d", value: Double(t.week), percent: false, fraction: 0)]
+        }
         return out
     }
 

@@ -228,7 +228,7 @@ final class PetView: NSView {
             let la: [NSAttributedString.Key: Any] = [.font: small, .foregroundColor: accent]
             let pa: [NSAttributedString.Key: Any] = [.font: small, .foregroundColor: ink]
             let x0 = bx + padX, x1 = bx + w - padX
-            let labelW: CGFloat = 19, pctW: CGFloat = 28
+            let labelW: CGFloat = 19, pctW: CGFloat = 36
             let track = CGColor(srgbRed: 0.90, green: 0.84, blue: 0.77, alpha: 1)
             for row in usage {
                 ty -= rowH
@@ -236,16 +236,17 @@ final class PetView: NSView {
                 (row.name as NSString).draw(at: CGPoint(x: x0, y: ty), withAttributes: la)
                 let txt = row.percent ? "\(Int(row.value.rounded()))%" : Self.compact(Int(row.value))
                 let tw = (txt as NSString).size(withAttributes: pa).width
-                (txt as NSString).draw(at: CGPoint(x: x1 - tw, y: ty), withAttributes: pa)
+                // percentages sit at the end of their bar; token counts, with no bar, stay next to their label
+                (txt as NSString).draw(at: CGPoint(x: row.percent ? x1 - tw : x0 + labelW, y: ty), withAttributes: pa)
                 guard row.percent else { continue }       // token counts have no limit to fill a bar against
-                let v = row.value
+                let frac = max(0, min(1, row.fraction))
                 ctx.setShouldAntialias(false)
                 let bx0 = x0 + labelW, bw = x1 - pctW - bx0, bh: CGFloat = 4
                 let by0 = ty + (rowH - bh) / 2 + 1
                 ctx.setFillColor(track)
                 ctx.fill(CGRect(x: bx0, y: by0, width: bw, height: bh))
-                ctx.setFillColor(v >= 80 ? CGColor(srgbRed: 0.78, green: 0.22, blue: 0.18, alpha: 1) : accent.cgColor)
-                ctx.fill(CGRect(x: bx0, y: by0, width: (bw * CGFloat(v / 100)).rounded(), height: bh))
+                ctx.setFillColor(frac >= 0.8 ? CGColor(srgbRed: 0.78, green: 0.22, blue: 0.18, alpha: 1) : accent.cgColor)
+                ctx.fill(CGRect(x: bx0, y: by0, width: max(frac > 0 ? 2 : 0, (bw * CGFloat(frac)).rounded()), height: bh))
             }
             ctx.restoreGState()
         }
@@ -254,6 +255,7 @@ final class PetView: NSView {
     // MARK: mouse (drag, throw, click, context menu)
 
     override func mouseDown(with event: NSEvent) {
+        if event.clickCount == 2 { pet?.showUsageByHand(now: CACurrentMediaTime()) }
         pet?.beginDrag(mouse: NSEvent.mouseLocation, now: CACurrentMediaTime())
     }
 
